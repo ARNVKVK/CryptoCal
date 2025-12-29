@@ -14,7 +14,6 @@
             position: absolute; top: 100%; left: 0; right: 0; z-index: 1000;
             background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             max-height: 250px; 
-            /* ล็อคไม่ให้เลื่อนซ้ายขวา */
             overflow-y: auto; 
             overflow-x: hidden; 
             border: 1px solid #e2e8f0; margin-top: 5px;
@@ -50,6 +49,22 @@
             z-index: 10;
         }
 
+        /* สำหรับ Auto Slide */
+        .ad-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            visibility: hidden;
+        }
+        .ad-slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .item { padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; transition: 0.2s; width: 100%; }
         .item.selected, .item:hover { background-color: #e0e7ff; border-left: 4px solid #4f46e5; }
         .item img { width: 24px; height: 24px; border-radius: 50%; object-fit: contain; }
@@ -64,12 +79,17 @@
     <div class="flex flex-col lg:flex-row items-start justify-center gap-8 w-full max-w-7xl">
         
         <div class="hidden lg:block w-[320px] shrink-0 sticky top-8">
-            <a href="https://www.facebook.com/profile.php?id=61585471808878" target="_blank" class="block relative z-[50]">
-                <div class="ad-container">
-                    <span class="ad-label">AD SPACE</span>
-                    <img src="VSL.png" alt="Ads" class="w-full h-full object-cover">
-                </div>
-            </a>
+            <div class="ad-container slider-container">
+                <span class="ad-label">AD SPACE</span>
+                
+                <a href="https://www.facebook.com/profile.php?id=61585471808878" target="_blank" class="ad-slide active">
+                    <img src="VSL.png" alt="Ads 1" class="w-full h-full object-cover">
+                </a>
+                
+                <a href="https://www.facebook.com/profile.php?id=61585471808878" target="_blank" class="ad-slide">
+                    <img src="VSL.png" alt="Ads 2" class="w-full h-full object-cover">
+                </a>
+            </div>
         </div>
 
         <div class="w-full max-w-md shrink-0">
@@ -145,23 +165,50 @@
                                 รอการคำนวณ...
                             </div>
                         </div>
+                        <div class="mt-4 text-center">
+                                <a href="mailto:vaiklavikarn@gmail.com" class="text-[10px] font-bold text-indigo-400 hover:text-indigo-600 transition-all uppercase tracking-widest">
+                                    — ติดต่อโฆษณา / Contact for Ads —
+                                </a>
+                                <p>vaiklavikarn@gmail.com</p>
+                            </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="w-full lg:w-[320px] shrink-0 sticky top-8">
-            <a href="https://www.facebook.com/profile.php?id=61585471808878" target="_blank" class="block relative z-[50]">
-                <div class="ad-container max-w-[400px] lg:max-w-none mx-auto">
-                    <span class="ad-label">AD SPACE</span>
-                    <img src="VSL.png" alt="Ads" class="w-full h-full object-cover">
-                </div>
-            </a>
+            <div class="ad-container slider-container max-w-[400px] lg:max-w-none mx-auto">
+                <span class="ad-label">AD SPACE</span>
+                
+                <a href="https://www.facebook.com/profile.php?id=61585471808878" target="_blank" class="ad-slide active">
+                    <img src="VSL.png" alt="Ads 1" class="w-full h-full object-cover">
+                </a>
+                
+                <a href="https://www.facebook.com/profile.php?id=61585471808878" target="_blank" class="ad-slide">
+                    <img src="VSL.png" alt="Ads 2" class="w-full h-full object-cover">
+                </a>
+            </div>
         </div>
 
     </div>
 
     <script>
+        // --- ส่วนของ Auto Slider Logic ---
+        function initAdSliders() {
+            const containers = document.querySelectorAll('.slider-container');
+            
+            containers.forEach(container => {
+                const slides = container.querySelectorAll('.ad-slide');
+                let currentSlide = 0;
+
+                setInterval(() => {
+                    slides[currentSlide].classList.remove('active');
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    slides[currentSlide].classList.add('active');
+                }, 8000); // เปลี่ยนรูปทุกๆ 8 วินาที
+            });
+        }
+
         const thaiExchanges = [
             { name: "Bitkub", id: "bitkub", image: "https://www.bitkub.com/static/images/logo.png", fee: 0.25 },
             { name: "Orbix", id: "orbix", image: "https://www.orbix.trade/favicon.ico", fee: 0.25 },
@@ -176,6 +223,7 @@
         let selectedCurrency = 'thb';
 
         async function init() {
+            initAdSliders(); // เรียกใช้ Slider
             try {
                 const [coinRes, exRes] = await Promise.all([
                     fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=thb&per_page=250').then(r => r.json()),
@@ -331,3 +379,4 @@
     </script>
 </body>
 </html>
+
