@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crypto Calc Pro - Full Version</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f1f5f9; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .suggestion-box {
+            position: absolute; top: 100%; left: 0; right: 0; z-index: 1000;
+            background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-height: 250px; 
+            /* ล็อคไม่ให้เลื่อนซ้ายขวา */
+            overflow-y: auto; 
+            overflow-x: hidden; 
+            border: 1px solid #e2e8f0; margin-top: 5px;
+        }
+
+        .ad-container {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background-color: white;
+            border-radius: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border: 2px dashed #cbd5e1;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .ad-container:hover { border-color: #6366f1; transform: translateY(-2px); }
+
+        .ad-label {
+            background: #6366f1;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: bold;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+        }
+
+        .item { padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; transition: 0.2s; width: 100%; }
+        .item.selected, .item:hover { background-color: #e0e7ff; border-left: 4px solid #4f46e5; }
+        .item img { width: 24px; height: 24px; border-radius: 50%; object-fit: contain; }
+        
+        .suggestion-box::-webkit-scrollbar { width: 6px; }
+        .suggestion-box::-webkit-scrollbar-track { background: #f1f5f9; }
+        .suggestion-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex justify-center items-center min-h-screen">
+
+    <div class="flex flex-col lg:flex-row items-start justify-center gap-8 w-full max-w-7xl">
+        
+        <div class="hidden lg:block w-[320px] shrink-0 sticky top-8">
+            <a href="https://www.facebook.com/profile.php?id=61585471808878" target="_blank" class="block relative z-[50]">
+                <div class="ad-container">
+                    <span class="ad-label">AD SPACE</span>
+                    <img src="VSL.png" alt="Ads" class="w-full h-full object-cover">
+                </div>
+            </a>
+        </div>
+
+        <div class="w-full max-w-md shrink-0">
+            <div class="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-visible relative">
+                <div class="p-8 space-y-6">
+                    
+                    <div class="grid grid-cols-2 gap-4 relative z-[40]">
+                        <div class="relative">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Exchange</label>
+                            <input type="text" id="exInput" placeholder="กระดาน..." autocomplete="off"
+                                   class="w-full h-[56px] px-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm mt-1 border border-transparent transition-all">
+                            <div id="exList" class="suggestion-box hidden"></div>
+                        </div>
+                        <div class="relative">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Coin</label>
+                            <input type="text" id="coinInput" placeholder="เหรียญ..." autocomplete="off"
+                                   class="w-full h-[56px] px-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm mt-1 border border-transparent transition-all">
+                            <div id="coinList" class="suggestion-box hidden"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-end gap-3 relative z-[30]">
+                        <div class="flex-1 min-w-0">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">งบประมาณ</label>
+                            <div class="flex mt-1 h-[64px] bg-slate-50 rounded-2xl transition-all border border-transparent focus-within:ring-2 focus-within:ring-indigo-500 focus-within:bg-white relative">
+                                <input type="text" id="budgetInput" value="1,000" onfocus="this.select()"
+                                       class="w-full h-full px-4 bg-transparent outline-none font-bold text-2xl border-r border-slate-200/50">
+                                
+                                <div class="relative w-24 h-full">
+                                    <button id="curBtn" class="w-full h-full font-bold text-indigo-600 flex items-center justify-center gap-1 hover:bg-slate-100 transition-all rounded-r-2xl">
+                                        THB ▾
+                                    </button>
+                                    <div id="curList" class="suggestion-box hidden w-32 right-0 shadow-xl border border-slate-200">
+                                        <div class="item" onmousedown="selectCurrency('thb', 'THB ▾')">THB</div>
+                                        <div class="item" onmousedown="selectCurrency('usd', 'USD ▾')">USD</div>
+                                        <div class="item" onmousedown="selectCurrency('usdt', 'USDT ▾')">USDT</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="w-24">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase block text-center">ฟี (%)</label>
+                            <input type="number" id="feeInput" value="0.25" step="0.01" onfocus="this.select()"
+                                   class="w-full h-[64px] bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-2xl text-rose-500 text-center mt-1 border border-transparent transition-all">
+                        </div>
+                    </div>
+
+                    <button id="calcBtn" class="w-full bg-slate-900 text-white font-bold py-5 rounded-2xl active:scale-95 hover:bg-slate-800 transition-all text-lg shadow-lg relative z-[10]">
+                        คำนวณราคาปัจจุบัน
+                    </button>
+
+                    <div id="result" class="hidden mt-6 pt-8 border-t border-slate-100 relative z-[5]">
+                        <div class="text-center space-y-2">
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em]">Net Received</p>
+                            <div class="w-full px-2">
+                                <span id="resAmount" class="font-bold text-slate-900 mono tracking-tighter"></span>
+                                <span id="resSymbol" class="text-lg font-bold text-indigo-600 uppercase block mt-1"></span>
+                            </div>
+                        </div>
+                        <div class="mt-8 grid grid-cols-2 gap-4 text-center">
+                            <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+                                <p class="text-[10px] text-indigo-400 uppercase font-bold tracking-wider">Market Price</p>
+                                <p id="resPrice" class="font-bold text-slate-800 mt-1 mono text-xs truncate"></p>
+                            </div>
+                            <div class="bg-rose-50 p-4 rounded-2xl border border-rose-100">
+                                <p class="text-[10px] text-rose-400 uppercase font-bold tracking-wider">Trading Fee</p>
+                                <p id="resFee" class="font-bold text-rose-600 mt-1 mono text-xs truncate"></p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-center">
+                            <div id="dataStatus" class="inline-block px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-400">
+                                รอการคำนวณ...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-[320px] shrink-0 sticky top-8">
+            <a href="https://www.facebook.com/profile.php?id=61585471808878" target="_blank" class="block relative z-[50]">
+                <div class="ad-container max-w-[400px] lg:max-w-none mx-auto">
+                    <span class="ad-label">AD SPACE</span>
+                    <img src="VSL.png" alt="Ads" class="w-full h-full object-cover">
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        const thaiExchanges = [
+            { name: "Bitkub", id: "bitkub", image: "https://www.bitkub.com/static/images/logo.png", fee: 0.25 },
+            { name: "Orbix", id: "orbix", image: "https://www.orbix.trade/favicon.ico", fee: 0.25 },
+            { name: "Binance TH", id: "binance_th", image: "https://assets.coingecko.com/markets/images/52/small/binance.jpg", fee: 0.25 },
+            { name: "InnovestX", id: "innovestx", image: "https://www.innovestx.co.th/favicon.ico", fee: 0.25 },
+            { name: "Bitazza", id: "bitazza", image: "https://bitazza.com/favicon.ico", fee: 0.25 }
+        ];
+
+        let exchangeData = [...thaiExchanges];
+        let coinData = [];
+        let selectedCoin = { id: 'bitcoin', symbol: 'btc' };
+        let selectedCurrency = 'thb';
+
+        async function init() {
+            try {
+                const [coinRes, exRes] = await Promise.all([
+                    fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=thb&per_page=250').then(r => r.json()),
+                    fetch('https://api.coingecko.com/api/v3/exchanges?per_page=50').then(r => r.json())
+                ]);
+                if(coinRes) coinData = coinRes;
+                if(exRes) {
+                    const globalEx = exRes.filter(ex => !thaiExchanges.some(t => t.name.toLowerCase() === ex.name.toLowerCase())).map(ex => ({...ex, fee: 0.1}));
+                    exchangeData = [...thaiExchanges, ...globalEx];
+                }
+            } catch (e) { console.warn("API Offline Mode"); }
+        }
+
+        function saveToCache(id, currency, price) {
+            localStorage.setItem(`price_cache_${id}_${currency}`, JSON.stringify({ price, timestamp: new Date().toLocaleString('th-TH') }));
+        }
+
+        function getFromCache(id, currency) {
+            const cached = localStorage.getItem(`price_cache_${id}_${currency}`);
+            return cached ? JSON.parse(cached) : null;
+        }
+
+        document.getElementById('calcBtn').onclick = async () => {
+            const budget = parseFloat(document.getElementById('budgetInput').value.replace(/,/g, ''));
+            const fee = parseFloat(document.getElementById('feeInput').value) / 100;
+            const btn = document.getElementById('calcBtn');
+            const statusEl = document.getElementById('dataStatus');
+            const priceCurrency = (selectedCurrency === 'thb') ? 'thb' : 'usd';
+            
+            if (isNaN(budget) || budget <= 0) { alert("ระบุงบประมาณที่ถูกต้อง"); return; }
+            btn.innerText = "กำลังคำนวณ..."; btn.disabled = true;
+            
+            let marketPrice = 0, updateTime = "", isStaleData = false;
+            try {
+                const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${selectedCoin.id}&vs_currencies=${priceCurrency}`);
+                const data = await res.json();
+                marketPrice = data[selectedCoin.id][priceCurrency];
+                saveToCache(selectedCoin.id, priceCurrency, marketPrice);
+                updateTime = new Date().toLocaleTimeString('th-TH');
+            } catch (e) {
+                const cached = getFromCache(selectedCoin.id, priceCurrency);
+                if (cached) { marketPrice = cached.price; updateTime = cached.timestamp; isStaleData = true; }
+                else { alert("Error API"); btn.innerText = "คำนวณราคาปัจจุบัน"; btn.disabled = false; return; }
+            }
+
+            statusEl.innerText = isStaleData ? `⚠️ ข้อมูลสำรอง (${updateTime})` : `✅ อัปเดตล่าสุด: ${updateTime}`;
+            statusEl.className = isStaleData ? "inline-block px-3 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100" : "inline-block px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100";
+
+            const feeAmt = budget * fee;
+            const amount = (budget - feeAmt) / marketPrice;
+            const resAmountEl = document.getElementById('resAmount');
+            resAmountEl.innerText = amount.toLocaleString(undefined, { maximumFractionDigits: 8 });
+            resAmountEl.style.fontSize = resAmountEl.innerText.length > 10 ? "2rem" : "3rem";
+            document.getElementById('resSymbol').innerText = selectedCoin.symbol;
+            const prefix = (selectedCurrency === 'thb') ? '฿' : '$';
+            document.getElementById('resPrice').innerText = `${prefix}${marketPrice.toLocaleString()}`;
+            document.getElementById('resFee').innerText = `${prefix}${feeAmt.toLocaleString()}`;
+            document.getElementById('result').classList.remove('hidden');
+            btn.innerText = "คำนวณราคาปัจจุบัน"; btn.disabled = false;
+        };
+
+        window.selectCurrency = (val, text) => {
+            selectedCurrency = val;
+            document.getElementById('curBtn').innerText = text;
+            document.getElementById('curList').classList.add('hidden');
+            const currentEx = document.getElementById('exInput').value;
+            if (currentEx.includes("Binance TH")) {
+                document.getElementById('feeInput').value = (val === 'usdt') ? 0.1 : 0.25;
+            }
+        };
+
+        const curBtn = document.getElementById('curBtn');
+        const curList = document.getElementById('curList');
+        curBtn.onclick = (e) => { e.stopPropagation(); curList.classList.toggle('hidden'); };
+        window.onclick = () => document.querySelectorAll('.suggestion-box').forEach(el => el.classList.add('hidden'));
+
+        document.getElementById('budgetInput').oninput = (e) => {
+            const cursor = e.target.selectionStart; const oldLen = e.target.value.length;
+            let val = e.target.value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            e.target.value = val;
+            e.target.setSelectionRange(cursor + (val.length - oldLen), cursor + (val.length - oldLen));
+        };
+
+        function setupSearch(inputId, listId, isCoin) {
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(listId);
+            let currentFocus = -1;
+
+            input.oninput = () => { currentFocus = -1; renderList(); };
+            input.onfocus = () => { currentFocus = -1; input.select(); renderList(); };
+
+            input.onkeydown = (e) => {
+                let items = list.getElementsByClassName("item");
+                if (e.keyCode == 40) { 
+                    currentFocus++; addActive(items);
+                } else if (e.keyCode == 38) { 
+                    currentFocus--; addActive(items);
+                } else if (e.keyCode == 13) { 
+                    e.preventDefault();
+                    if (currentFocus > -1 && items[currentFocus]) items[currentFocus].onmousedown();
+                }
+            };
+
+            function addActive(items) {
+                if (!items) return false;
+                removeActive(items);
+                if (currentFocus >= items.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (items.length - 1);
+                items[currentFocus].classList.add("selected");
+                items[currentFocus].scrollIntoView({ block: 'nearest' });
+            }
+
+            function removeActive(items) {
+                for (let i = 0; i < items.length; i++) items[i].classList.remove("selected");
+            }
+
+            function renderList() {
+                const val = input.value.toLowerCase();
+                const data = isCoin ? coinData : exchangeData;
+                const filtered = data.filter(i => (i.name||"").toLowerCase().includes(val) || (i.symbol||"").toLowerCase().includes(val)).slice(0, 15);
+                if (filtered.length > 0) {
+                    list.innerHTML = filtered.map(i => `
+                        <div class="item" onmousedown="selectItem('${inputId}', '${listId}', '${isCoin ? i.name + ' (' + i.symbol.toUpperCase() + ')' : i.name}', '${i.id}', '${i.symbol}', ${isCoin}, ${i.fee})">
+                            <img src="${i.image}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/11550/11550130.png';" class="w-6 h-6 rounded-full bg-slate-100">
+                            <div class="flex flex-col"><span class="font-bold text-sm text-slate-700 truncate">${i.name}</span></div>
+                        </div>
+                    `).join('');
+                    list.classList.remove('hidden');
+                } else list.classList.add('hidden');
+            }
+        }
+
+        window.selectItem = (inputId, listId, text, id, symbol, isCoin, fee) => {
+            document.getElementById(inputId).value = text;
+            document.getElementById(listId).classList.add('hidden');
+            if (isCoin) {
+                selectedCoin = { id, symbol };
+            } else {
+                if (text.includes("Binance TH")) {
+                    document.getElementById('feeInput').value = (selectedCurrency === 'usdt') ? 0.1 : 0.25;
+                } else {
+                    if (fee !== undefined) document.getElementById('feeInput').value = fee;
+                }
+            }
+        };
+
+        init();
+        setupSearch('exInput', 'exList', false);
+        setupSearch('coinInput', 'coinList', true);
+        document.getElementById('exInput').value = "Binance TH";
+        document.getElementById('coinInput').value = "Bitcoin (BTC)";
+        document.getElementById('feeInput').value = 0.25;
+    </script>
+</body>
+</html>
