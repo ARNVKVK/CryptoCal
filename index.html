@@ -323,14 +323,11 @@
         <div class="w-full lg:w-[320px] shrink-0 lg:sticky lg:top-8 order-second-mobile">
             <div class="ad-container slider-container max-w-[400px] lg:max-w-none mx-auto">
                 <span class="ad-label">AD SPACE</span>
-                <a href="https://s.shopee.co.th/5L5G1mGCay" target="_blank" class="ad-slide active">
-                    <img src="ZabMike.JPG" alt="Ads 1" class="w-full h-full object-cover">
+                <a href="https://www.facebook.com/profile.php?id=61585471808878" target="_blank" class="ad-slide active">
+                    <img src="VSL.png" alt="Ads 1" class="w-full h-full object-cover">
                 </a>
-                <a href="https://s.shopee.co.th/5fi6PHuYS9" target="_blank" class="ad-slide">
-                    <img src="Whiskas.JPG" alt="Ads 2" class="w-full h-full object-cover">
-                </a>
-                <a href="https://s.shopee.co.th/1LZ7OZGclO" target="_blank" class="ad-slide">
-                    <img src="Ledger.JPG" alt="Ads 3" class="w-full h-full object-cover">
+                <a href="https://www.facebook.com/profile.php?id=61585471808878" target="_blank" class="ad-slide">
+                    <img src="VSL.png" alt="Ads 2" class="w-full h-full object-cover">
                 </a>
             </div>
         </div>
@@ -385,7 +382,6 @@
                 }
                 
                 fetchLivePrice();
-                // เอา setInterval ออก ตามที่ขอครับ
 
             } catch (e) {
                 console.warn("API Offline Mode");
@@ -394,7 +390,7 @@
 
         async function fetchLivePrice() {
             const liveEl = document.getElementById('liveInfo');
-            const timeEl = document.getElementById('lastUpdateTime'); // Element สำหรับแสดงเวลา
+            const timeEl = document.getElementById('lastUpdateTime'); 
             const coinId = selectedCoin.id;
             const queryCurrency = selectedCurrency === 'usdt' ? 'usd' : selectedCurrency;
             
@@ -406,7 +402,6 @@
                     const price = data[coinId][queryCurrency];
                     const changePct = data[coinId][`${queryCurrency}_24h_change`];
                     
-                    // คำนวณมูลค่าที่เปลี่ยนแปลง
                     const startPrice = price / (1 + (changePct / 100));
                     const changeValue = price - startPrice;
 
@@ -418,11 +413,9 @@
                     void liveEl.offsetWidth; 
                     liveEl.classList.add('updating');
 
-                    // อัปเดตเวลาล่าสุด
                     const now = new Date();
                     timeEl.innerText = `(${now.toLocaleTimeString('th-TH')})`;
 
-                    // แสดงผล 3 ส่วน: ราคา, มูลค่าที่เปลี่ยน, เปอร์เซ็นต์
                     liveEl.innerHTML = `
                         <span class="info-group text-slate-800 font-extrabold text-sm border-r border-slate-300 pr-3">
                             ${prefix}${price.toLocaleString()}
@@ -518,11 +511,30 @@
             }
         }
 
+        // Logic ใหม่: ป้องกันจุดทศนิยมซ้ำ และเอาคอมม่าหลังจุดออก
         document.getElementById('budgetInput').oninput = (e) => {
-            let val = e.target.value.replace(/[^\d.]/g, "");
-            if(!isSellMode) {
-                val = val.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            // 1. ดึงค่าดิบและลบคอมม่าออกให้หมดก่อน
+            let val = e.target.value.replace(/,/g, '');
+
+            // 2. ลบตัวอักษรขยะที่ไม่ใช่ตัวเลขหรือจุด
+            val = val.replace(/[^0-9.]/g, '');
+
+            // 3. ป้องกันจุดทศนิยมซ้ำ (ให้เหลือแค่จุดแรกสุด)
+            const parts = val.split('.');
+            if (parts.length > 2) {
+                // เก็บส่วนหน้าจุด + จุด + ส่วนหลังจุดทั้งหมดรวมกัน (โดยไม่มีจุดเพิ่ม)
+                val = parts[0] + '.' + parts.slice(1).join('');
             }
+
+            // 4. ใส่คอมม่าเฉพาะส่วนจำนวนเต็ม (ถ้าไม่ใช่โหมดขาย)
+            if(!isSellMode) {
+                const splitVal = val.split('.'); // แยกส่วนเต็มกับทศนิยม
+                // ใส่คอมม่าให้ส่วนจำนวนเต็ม
+                splitVal[0] = splitVal[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                // รวมกลับ (ถ้ามีจุดก็ใส่จุดคืน)
+                val = splitVal.join('.');
+            }
+
             e.target.value = val;
             adjustInputFontSize(e.target);
             checkMirror(e.target);
@@ -795,6 +807,7 @@
     </script>
 </body>
 </html>
+
 
 
 
